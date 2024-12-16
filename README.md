@@ -39,7 +39,7 @@ OPENAI_API_KEY: "votre_cle_api_openai"
 
 1. Clonez le dépôt :
     ```bash
-    git clone https://github.com/username/repository.git
+    git clone https://github.com/devnetworking/CalderaOpsManager.git
     cd repository
     ```
 
