@@ -139,7 +139,9 @@ pip install requests pyyaml openai
 
 ## **Contributeurs**
 - **Nom** : Hamza
-- **Rôle** : Développeur principal
+- **Rôle** : Développeur principal 1
+- **Nom** : Mohammed
+- **Rôle** : Développeur principal 2
 
 ---
 
