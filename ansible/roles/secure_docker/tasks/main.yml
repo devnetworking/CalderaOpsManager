@@ -1,25 +1,156 @@
 ---
-- name: Mettre à jour les paquets système
+# -------------------------------------------
+# 1. Mettre à jour le système
+# -------------------------------------------
+- name: Update apt cache
   apt:
     update_cache: yes
+    cache_valid_time: 3600
 
-- name: Installer Docker
+- name: Upgrade all system packages
+  apt:
+    upgrade: dist
+
+# -------------------------------------------
+# 2. Assurer que Docker est à jour
+# -------------------------------------------
+- name: Ensure Docker is installed
   apt:
     name: docker.io
-    state: "{{ docker_version }}"
+    state: latest
 
-- name: Restreindre les permissions du socket Docker
+- name: Ensure Docker is up-to-date
+  shell: |
+    apt-get update
+    apt-get install --only-upgrade -y docker.io
+
+# -------------------------------------------
+# 3. Protéger les permissions du socket Docker
+# -------------------------------------------
+- name: Restrict access to the Docker socket
   file:
     path: /var/run/docker.sock
     mode: '0640'
     owner: root
-    group: "{{ docker_group }}"
+    group: docker
 
-- name: Configurer le fichier de configuration de Docker
-  template:
-    src: daemon.json.j2
+# -------------------------------------------
+# 4. Activer l'isolation des namespaces
+# -------------------------------------------
+- name: Configure Docker daemon for user namespace remapping
+  copy:
     dest: /etc/docker/daemon.json
+    content: |
+      {
+        "userns-remap": "default"
+      }
 
-- name: Redémarrer le service Docker
-  notify: restart docker
+- name: Restart Docker to apply namespace remapping
+  systemd:
+    name: docker
+    state: restarted
+
+# -------------------------------------------
+# 5. Désactiver l'accès root au conteneur
+# -------------------------------------------
+- name: Create a non-root user to manage Docker
+  user:
+    name: dockeruser
+    groups: docker
+    shell: /bin/bash
+    create_home: yes
+    home: /home/dockeruser
+
+- name: Ensure no containers are running as root
+  shell: |
+    docker ps --quiet | xargs --no-run-if-empty docker inspect --format '{{ .Id }}: {{ .Config.User }}' | grep -v ': root'
+  register: root_containers
+  changed_when: false
+
+- name: Fail if any container is running as root
+  fail:
+    msg: "One or more containers are running as root, which is a security risk."
+  when: root_containers.stdout != ''
+
+# -------------------------------------------
+# 6. Configurer les options de démarrage de Docker
+# -------------------------------------------
+- name: Configure Docker daemon to drop capabilities
+  copy:
+    dest: /etc/docker/daemon.json
+    content: |
+      {
+        "userns-remap": "default",
+        "no-new-privileges": true,
+        "log-level": "info",
+        "live-restore": true,
+        "default-runtime": "runc",
+        "log-driver": "json-file",
+        "log-opts": {
+          "max-size": "10m",
+          "max-file": "3"
+        }
+      }
+
+- name: Restart Docker to apply security configurations
+  systemd:
+    name: docker
+    state: restarted
+
+# -------------------------------------------
+# 7. Restreindre les droits sur le fichier de configuration Docker
+# -------------------------------------------
+- name: Restrict permissions on Docker configuration file
+  file:
+    path: /etc/docker/daemon.json
+    mode: '0644'
+    owner: root
+    group: root
+
+# -------------------------------------------
+# 8. Configurer AppArmor et Seccomp pour Docker
+# -------------------------------------------
+- name: Ensure AppArmor is enabled for Docker
+  shell: |
+    apparmor_status | grep docker-default
+  register: apparmor_status
+  changed_when: false
+
+- name: Apply AppArmor profile to running containers
+  shell: |
+    docker ps --quiet | xargs --no-run-if-empty -I {} docker run --security-opt apparmor=docker-default --name container_{} {}
+  when: apparmor_status.stdout == ''
+
+- name: Ensure Docker is running with the default Seccomp profile
+  shell: |
+    docker info --format '{{ .SecurityOptions }}' | grep seccomp
+  register: seccomp_status
+  changed_when: false
+
+- name: Fail if Seccomp is not enabled
+  fail:
+    msg: "Seccomp is not enabled. Docker is running without an essential security control."
+  when: seccomp_status.stdout == ''
+
+# -------------------------------------------
+# 9. Supprimer les conteneurs, images et volumes non utilisés
+# -------------------------------------------
+- name: Remove unused Docker containers
+  shell: |
+    docker container prune -f
+
+- name: Remove unused Docker images
+  shell: |
+    docker image prune -f
+
+- name: Remove unused Docker volumes
+  shell: |
+    docker volume prune -f
+
+# -------------------------------------------
+# 10. Redémarrer le système (optionnel)
+# -------------------------------------------
+- name: Reboot the system to apply all security changes
+  reboot:
+    msg: "System is rebooting to apply security changes to Docker."
 
