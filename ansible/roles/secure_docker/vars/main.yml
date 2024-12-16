@@ -1,0 +1,7 @@
+---
+docker_user: dockeruser
+docker_group: docker
+docker_version: latest
+docker_log_size: "10m"
+docker_log_files: 3
+

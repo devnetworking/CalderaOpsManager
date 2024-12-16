@@ -1,0 +1,7 @@
+---
+- name: Appliquer le rôle de sécurisation Docker
+  hosts: all
+  become: true
+  roles:
+    - role: secure_docker
+

@@ -1,0 +1,16 @@
+ability_id: "69603e49-9f25-400e-8a78-8c5de4077c2d"
+tactic: "discovery"
+technique_name: "Software Discovery"
+technique_id: "T1518"
+name: "INF808 - Découverte des logiciels installés"
+description: ""
+executors:
+  - name: "sh"
+    platform: "linux"
+    command: "find / -name \"docker.sock\" 2>/dev/null"
+    timeout: 60
+requirements: []
+privilege: ""
+repeatable: false
+buckets: ["discovery"]
+delete_payload: true

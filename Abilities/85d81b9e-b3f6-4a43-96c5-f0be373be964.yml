@@ -1,0 +1,16 @@
+ability_id: "85d81b9e-b3f6-4a43-96c5-f0be373be964"
+tactic: "discovery"
+technique_name: "Discover Docker Containers"
+technique_id: "T1610.1"
+name: "INF808 - Discovery: List Docker Containers"
+description: "Découverte des conteneurs Docker sur la machine cible"
+executors:
+  - name: "sh"
+    platform: "linux"
+    command: "docker ps -a"
+    timeout: 60
+requirements: []
+privilege: ""
+repeatable: false
+buckets: ["discovery"]
+delete_payload: true

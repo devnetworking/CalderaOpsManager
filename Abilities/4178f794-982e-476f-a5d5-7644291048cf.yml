@@ -1,0 +1,16 @@
+ability_id: "4178f794-982e-476f-a5d5-7644291048cf"
+tactic: "defense-evasion"
+technique_name: "Indicator Removal"
+technique_id: "T1070"
+name: "INF808 - Cleanup: Clear Logs and History"
+description: "Supprimer l'historique des commandes bash et vider les journaux système"
+executors:
+  - name: "sh"
+    platform: "linux"
+    command: "echo \"\" > /var/log/auth.log && echo \"\" > ~/.bash_history"
+    timeout: 60
+requirements: []
+privilege: ""
+repeatable: false
+buckets: ["defense-evasion"]
+delete_payload: true
